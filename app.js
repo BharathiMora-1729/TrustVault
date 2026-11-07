@@ -1,12 +1,17 @@
 /**
  * Global TrustVault Frontend JavaScript Utility & Auth Manager
+ * Features 10s AbortController timeout protection and robust error handling.
  */
 
-// Global API Helper
-async function apiCall(endpoint, method = 'GET', body = null) {
+// Global API Helper with 10s AbortController Timeout Protection
+async function apiCall(endpoint, method = 'GET', body = null, timeoutMs = 10000) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
   const options = {
     method,
-    headers: {}
+    headers: {},
+    signal: controller.signal
   };
 
   if (body) {
@@ -20,14 +25,23 @@ async function apiCall(endpoint, method = 'GET', body = null) {
 
   try {
     const response = await fetch(endpoint, options);
-    const data = await response.json();
+    clearTimeout(timeoutId);
+
+    const data = await response.json().catch(() => ({}));
 
     if (!response.ok) {
-      throw new Error(data.error || 'Request failed with status ' + response.status);
+      throw new Error(data.error || `Server returned error status ${response.status}`);
     }
 
     return data;
   } catch (err) {
+    clearTimeout(timeoutId);
+    if (err.name === 'AbortError') {
+      throw new Error('Authentication request timed out (10s). The server may be waking up from sleep—please click Log In again.');
+    }
+    if (err.message === 'Failed to fetch' || err.name === 'TypeError') {
+      throw new Error('Network error: Unable to connect to TrustVault server. Please check your internet connection.');
+    }
     console.error(`API Error [${method} ${endpoint}]:`, err);
     throw err;
   }
@@ -36,10 +50,10 @@ async function apiCall(endpoint, method = 'GET', body = null) {
 // Authentication & Role Check
 async function checkAuth(requiredRole = null) {
   try {
-    const data = await apiCall('/api/auth/me');
+    const data = await apiCall('/api/auth/me', 'GET', null, 5000);
     const user = data.user;
 
-    // Display user info in sidebar if present
+    // Display user info in sidebar if elements present
     const userNameElem = document.getElementById('user-name-display');
     const userRoleElem = document.getElementById('user-role-display');
     if (userNameElem) userNameElem.textContent = user.name;
@@ -77,10 +91,10 @@ function redirectToRoleDashboard(role) {
 // Global Logout Action
 async function handleLogout() {
   try {
-    await apiCall('/api/auth/logout', 'POST');
+    await apiCall('/api/auth/logout', 'POST', null, 5000);
     window.location.href = '/index.html';
   } catch (err) {
-    alert('Logout failed: ' + err.message);
+    window.location.href = '/index.html';
   }
 }
 
@@ -99,7 +113,7 @@ function showToast(message, type = 'success') {
   setTimeout(() => {
     toastElem.classList.remove('show');
     setTimeout(() => toastElem.remove(), 200);
-  }, 4000);
+  }, 5000);
 }
 
 function createToastContainer() {
@@ -123,6 +137,5 @@ function formatBytes(bytes, decimals = 2) {
 
 function formatDate(dateString) {
   if (!dateString) return 'N/A';
-  const date = new Date(dateString);
-  return date.toLocaleString();
+  return new Date(dateString).toLocaleString();
 }
