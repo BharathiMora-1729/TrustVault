@@ -14,8 +14,11 @@ const crypto = require('crypto');
 
 /**
  * TrustVault - Complete Self-Contained Enterprise Server
- * Optimized for instant login responses and zero-delay authentication.
+ * Optimized with async post-login logging & tuned CPU hashing for blazing-fast authentication.
  */
+
+// BCRYPT SALT ROUNDS (Tuned to 8 for 4x faster CPU hashing on cloud instances)
+const BCRYPT_SALT_ROUNDS = 8;
 
 // ============================================================================
 // 1. DATABASE & CONFIGURATION
@@ -451,7 +454,7 @@ app.post('/api/auth/register', async (req, res, next) => {
     const existing = db.prepare('SELECT id FROM users WHERE LOWER(email) = ?').get(normalizedEmail);
     if (existing) return res.status(409).json({ error: 'An account with this email address already exists.' });
 
-    const salt = await bcrypt.genSalt(10);
+    const salt = await bcrypt.genSalt(BCRYPT_SALT_ROUNDS);
     const passwordHash = await bcrypt.hash(password, salt);
     const userId = uuidv4();
 
@@ -468,6 +471,7 @@ app.post('/api/auth/register', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
+// ULTRA-FAST LOGIN ENDPOINT WITH ASYNC NON-BLOCKING POST-PROCESSING
 app.post('/api/auth/login', async (req, res, next) => {
   try {
     const { email, password } = req.body;
@@ -482,6 +486,7 @@ app.post('/api/auth/login', async (req, res, next) => {
       return res.status(401).json({ error: 'Invalid email or password.' });
     }
 
+    // Fast bcrypt password verification
     const isMatch = await bcrypt.compare(password, user.password_hash);
     if (!isMatch) {
       logEvent(db, { userId: user.id, action: 'USER_LOGIN_FAILED', result: 'FAILURE', ipAddress: req.ip, metadata: { email: normalizedEmail, reason: 'Incorrect password' } });
@@ -493,16 +498,25 @@ app.post('/api/auth/login', async (req, res, next) => {
       return res.status(403).json({ error: 'Your account has been disabled. Please contact an administrator.' });
     }
 
-    // Direct Instant Session Assignment (Zero-delay authentication)
+    // 1. Instantly bind session
     req.session.userId = user.id;
-    db.prepare('UPDATE users SET last_login_at = ? WHERE id = ?').run(new Date().toISOString(), user.id);
 
-    logEvent(db, { userId: user.id, action: 'USER_LOGIN_SUCCESS', result: 'SUCCESS', ipAddress: req.ip, metadata: { email: normalizedEmail, role: user.role } });
-
+    // 2. IMMEDIATELY respond to client (Zero-delay HTTP response)
     res.json({
       message: 'Login successful.',
       user: { id: user.id, name: user.name, email: user.email, role: user.role, status: user.status }
     });
+
+    // 3. Perform last-login update & audit log asynchronously in background
+    setImmediate(() => {
+      try {
+        db.prepare('UPDATE users SET last_login_at = ? WHERE id = ?').run(new Date().toISOString(), user.id);
+        logEvent(db, { userId: user.id, action: 'USER_LOGIN_SUCCESS', result: 'SUCCESS', ipAddress: req.ip, metadata: { email: normalizedEmail, role: user.role } });
+      } catch (err) {
+        console.error('Async login logging error:', err);
+      }
+    });
+
   } catch (err) { next(err); }
 });
 
@@ -942,7 +956,7 @@ function seedDefaultAdmin() {
     const adminId = uuidv4();
     const adminEmail = 'admin@trustvault.com';
     const adminPassword = 'AdminPassword123!';
-    const passwordHash = bcrypt.hashSync(adminPassword, 10);
+    const passwordHash = bcrypt.hashSync(adminPassword, BCRYPT_SALT_ROUNDS);
 
     db.prepare("INSERT INTO users (id, name, email, password_hash, role, status) VALUES (?, 'System Administrator', ?, ?, 'ADMIN', 'ACTIVE')")
       .run(adminId, adminEmail, passwordHash);
