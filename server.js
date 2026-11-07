@@ -14,7 +14,7 @@ const crypto = require('crypto');
 
 /**
  * TrustVault - Complete Self-Contained Enterprise Server
- * Built with defensive inline module resolution to guarantee ZERO 'MODULE_NOT_FOUND' errors on Render/GitHub.
+ * Handles directory permissions gracefully to prevent EACCES errors on cloud platforms.
  */
 
 // ============================================================================
@@ -23,9 +23,19 @@ const crypto = require('crypto');
 let dbInstance = null;
 
 function getDatabase(customPath = null) {
-  const dataDir = process.env.DATA_DIR || path.join(__dirname, 'data');
-  if (!fs.existsSync(dataDir)) {
-    fs.mkdirSync(dataDir, { recursive: true });
+  let dataDir = process.env.DATA_DIR || path.join(__dirname, 'data');
+
+  // Defensive Directory Creation (Graceful fallback if /var/data permission is denied)
+  try {
+    if (!fs.existsSync(dataDir)) {
+      fs.mkdirSync(dataDir, { recursive: true });
+    }
+  } catch (err) {
+    console.warn(`[TrustVault Storage Warning]: Cannot create '${dataDir}' (${err.message}). Falling back to local './data' directory.`);
+    dataDir = path.join(__dirname, 'data');
+    if (!fs.existsSync(dataDir)) {
+      fs.mkdirSync(dataDir, { recursive: true });
+    }
   }
 
   const dbPath = customPath || path.join(dataDir, 'trustvault.db');
@@ -207,9 +217,17 @@ function verifyAuditChain(db) {
 }
 
 function getStorageDir() {
-  const storageDir = process.env.STORAGE_DIR || path.join(__dirname, 'storage');
-  if (!fs.existsSync(storageDir)) {
-    fs.mkdirSync(storageDir, { recursive: true });
+  let storageDir = process.env.STORAGE_DIR || path.join(__dirname, 'storage');
+  try {
+    if (!fs.existsSync(storageDir)) {
+      fs.mkdirSync(storageDir, { recursive: true });
+    }
+  } catch (err) {
+    console.warn(`[TrustVault Storage Warning]: Cannot create '${storageDir}' (${err.message}). Falling back to local './storage' directory.`);
+    storageDir = path.join(__dirname, 'storage');
+    if (!fs.existsSync(storageDir)) {
+      fs.mkdirSync(storageDir, { recursive: true });
+    }
   }
   return storageDir;
 }
