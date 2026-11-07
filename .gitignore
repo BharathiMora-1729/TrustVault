@@ -1,0 +1,24 @@
+# Node dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment variables
+.env
+.env.local
+.env.production
+
+# Data and Storage directories (persistent on server)
+data/
+storage/*
+!storage/.gitkeep
+
+# Operating system / IDE files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Test output
+coverage/

@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TrustVault - Admin Dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+  <div class="app-wrapper">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <i class="bi bi-shield-lock-fill"></i>
+        <span>TrustVault</span>
+      </div>
+      <ul class="sidebar-menu">
+        <li class="sidebar-menu-item">
+          <a href="#overview" class="sidebar-menu-link active" data-bs-toggle="tab" data-bs-target="#tab-overview">
+            <i class="bi bi-grid-1x2-fill"></i> Overview
+          </a>
+        </li>
+        <li class="sidebar-menu-item">
+          <a href="#users" class="sidebar-menu-link" data-bs-toggle="tab" data-bs-target="#tab-users">
+            <i class="bi bi-people-fill"></i> User Management
+          </a>
+        </li>
+        <li class="sidebar-menu-item">
+          <a href="#documents" class="sidebar-menu-link" data-bs-toggle="tab" data-bs-target="#tab-documents">
+            <i class="bi bi-folder-fill"></i> All Documents
+          </a>
+        </li>
+        <li class="sidebar-menu-item">
+          <a href="#security" class="sidebar-menu-link" data-bs-toggle="tab" data-bs-target="#tab-security">
+            <i class="bi bi-shield-exclamation"></i> Security & Audit
+          </a>
+        </li>
+      </ul>
+      <div class="sidebar-user">
+        <div class="sidebar-user-name" id="user-name-display">Administrator</div>
+        <div class="sidebar-user-role">ADMINISTRATOR</div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <header class="top-header">
+        <h2 class="header-title">Admin Dashboard</h2>
+        <button class="btn btn-outline-danger btn-sm" onclick="handleLogout()">
+          <i class="bi bi-box-arrow-right me-1"></i> Logout
+        </button>
+      </header>
+
+      <div class="content-body">
+        <div class="tab-content">
+          <!-- Overview Tab -->
+          <div class="tab-pane fade show active" id="tab-overview">
+            <!-- Stat Cards -->
+            <div class="row g-3 mb-4">
+              <div class="col-md-3">
+                <div class="stat-card d-flex align-items-center gap-3">
+                  <div class="stat-icon primary"><i class="bi bi-people"></i></div>
+                  <div>
+                    <div class="stat-label">Total Users</div>
+                    <div class="stat-value" id="stat-total-users">0</div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="stat-card d-flex align-items-center gap-3">
+                  <div class="stat-icon success"><i class="bi bi-person-check"></i></div>
+                  <div>
+                    <div class="stat-label">Active Users</div>
+                    <div class="stat-value" id="stat-active-users">0</div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="stat-card d-flex align-items-center gap-3">
+                  <div class="stat-icon danger"><i class="bi bi-person-x"></i></div>
+                  <div>
+                    <div class="stat-label">Disabled Users</div>
+                    <div class="stat-value" id="stat-disabled-users">0</div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="stat-card d-flex align-items-center gap-3">
+                  <div class="stat-icon teal"><i class="bi bi-file-earmark-text"></i></div>
+                  <div>
+                    <div class="stat-label">Total Documents</div>
+                    <div class="stat-value" id="stat-total-docs">0</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Secondary Stat Cards -->
+            <div class="row g-3 mb-4">
+              <div class="col-md-4">
+                <div class="stat-card d-flex align-items-center gap-3">
+                  <div class="stat-icon primary"><i class="bi bi-hdd-network"></i></div>
+                  <div>
+                    <div class="stat-label">Total Storage Used</div>
+                    <div class="stat-value" id="stat-storage-used">0 Bytes</div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="stat-card d-flex align-items-center gap-3">
+                  <div class="stat-icon warning"><i class="bi bi-share"></i></div>
+                  <div>
+                    <div class="stat-label">Shared Documents</div>
+                    <div class="stat-value" id="stat-shared-docs">0</div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="stat-card d-flex align-items-center gap-3">
+                  <div class="stat-icon danger"><i class="bi bi-exclamation-triangle"></i></div>
+                  <div>
+                    <div class="stat-label">Security Events</div>
+                    <div class="stat-value" id="stat-security-events">0</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Charts Row -->
+            <div class="row g-3 mb-4">
+              <div class="col-md-8">
+                <div class="custom-card">
+                  <div class="custom-card-header">
+                    <h3 class="custom-card-title">User Roles Distribution</h3>
+                  </div>
+                  <div class="custom-card-body" style="height: 280px; position: relative;">
+                    <canvas id="roleChart"></canvas>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="custom-card">
+                  <div class="custom-card-header">
+                    <h3 class="custom-card-title">Recent System Activities</h3>
+                  </div>
+                  <div class="custom-card-body p-0" style="max-height: 280px; overflow-y: auto;">
+                    <ul class="list-group list-group-flush" id="recent-activities-list">
+                      <li class="list-group-item text-muted">Loading activities...</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- User Management Tab -->
+          <div class="tab-pane fade" id="tab-users">
+            <div class="custom-card">
+              <div class="custom-card-header">
+                <h3 class="custom-card-title">User Accounts Directory</h3>
+                <div class="d-flex gap-2">
+                  <input type="text" id="user-search-input" class="form-control form-control-sm" placeholder="Search by name or email..." style="width: 240px;">
+                  <select id="user-role-filter" class="form-select form-select-sm" style="width: 140px;">
+                    <option value="">All Roles</option>
+                    <option value="ADMIN">ADMIN</option>
+                    <option value="OWNER">OWNER</option>
+                    <option value="VIEWER">VIEWER</option>
+                  </select>
+                </div>
+              </div>
+              <div class="custom-card-body p-0">
+                <div class="table-responsive">
+                  <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                      <tr>
+                        <th>User</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Status</th>
+                        <th>Registered Date</th>
+                        <th>Last Login</th>
+                        <th class="text-end">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody id="users-table-body">
+                      <tr><td colspan="7" class="text-center py-4 text-muted">Loading users...</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- All Documents Tab -->
+          <div class="tab-pane fade" id="tab-documents">
+            <div class="custom-card">
+              <div class="custom-card-header">
+                <h3 class="custom-card-title">Platform Documents Oversight</h3>
+              </div>
+              <div class="custom-card-body p-0">
+                <div class="table-responsive">
+                  <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                      <tr>
+                        <th>Document Name</th>
+                        <th>Owner</th>
+                        <th>Category</th>
+                        <th>File Size</th>
+                        <th>Active Shares</th>
+                        <th>Uploaded Date</th>
+                      </tr>
+                    </thead>
+                    <tbody id="documents-table-body">
+                      <tr><td colspan="6" class="text-center py-4 text-muted">Loading documents...</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Security & Audit Tab -->
+          <div class="tab-pane fade" id="tab-security">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h4 class="mb-0 font-bold">Tamper-Evident Audit Logging</h4>
+              <button class="btn btn-outline-success btn-sm" id="verify-audit-btn">
+                <i class="bi bi-shield-check me-1"></i> Verify Audit Chain Integrity
+              </button>
+            </div>
+
+            <div id="verify-alert" class="alert d-none mb-3"></div>
+
+            <div class="custom-card">
+              <div class="custom-card-header">
+                <h3 class="custom-card-title">Security & Audit Event Stream</h3>
+              </div>
+              <div class="custom-card-body p-0">
+                <div class="table-responsive">
+                  <table class="table table-hover align-middle mb-0" style="font-size: 0.875rem;">
+                    <thead class="table-light">
+                      <tr>
+                        <th>Timestamp</th>
+                        <th>User</th>
+                        <th>Action</th>
+                        <th>Result</th>
+                        <th>IP Address</th>
+                        <th>Event Hash</th>
+                      </tr>
+                    </thead>
+                    <tbody id="audit-table-body">
+                      <tr><td colspan="6" class="text-center py-4 text-muted">Loading audit logs...</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Role Change Modal -->
+  <div class="modal fade" id="roleModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Change User Role</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="modal-user-id">
+          <p class="text-muted small">Target User: <strong id="modal-user-email"></strong></p>
+          <div class="mb-3">
+            <label for="modal-role-select" class="form-label font-semibold">Select New Role</label>
+            <select id="modal-role-select" class="form-select">
+              <option value="ADMIN">ADMIN (Full System Controls)</option>
+              <option value="OWNER">OWNER (Upload & Document Management)</option>
+              <option value="VIEWER">VIEWER (Read/Edit Shared Documents)</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" id="save-role-btn">Save Changes</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="/js/app.js"></script>
+  <script>
+    let roleChartInstance = null;
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      await checkAuth('ADMIN');
+      loadDashboardData();
+      loadUsers();
+      loadDocuments();
+      loadAuditLogs();
+
+      // Event listeners for filters
+      document.getElementById('user-search-input').addEventListener('input', loadUsers);
+      document.getElementById('user-role-filter').addEventListener('change', loadUsers);
+      document.getElementById('verify-audit-btn').addEventListener('click', verifyAuditChain);
+      document.getElementById('save-role-btn').addEventListener('click', submitRoleChange);
+    });
+
+    async function loadDashboardData() {
+      try {
+        const data = await apiCall('/api/admin/dashboard');
+        const s = data.stats;
+
+        document.getElementById('stat-total-users').textContent = s.totalUsers;
+        document.getElementById('stat-active-users').textContent = s.activeUsers;
+        document.getElementById('stat-disabled-users').textContent = s.disabledUsers;
+        document.getElementById('stat-total-docs').textContent = s.totalDocs;
+        document.getElementById('stat-storage-used').textContent = formatBytes(s.totalStorageBytes);
+        document.getElementById('stat-shared-docs').textContent = s.totalSharedDocs;
+        document.getElementById('stat-security-events').textContent = s.securityEventsCount;
+
+        // Render Role Chart
+        const ctx = document.getElementById('roleChart').getContext('2d');
+        const roles = data.rolesBreakdown.map(r => r.role);
+        const counts = data.rolesBreakdown.map(r => r.count);
+
+        if (roleChartInstance) roleChartInstance.destroy();
+        roleChartInstance = new Chart(ctx, {
+          type: 'doughnut',
+          data: {
+            labels: roles,
+            datasets: [{
+              data: counts,
+              backgroundColor: ['#7c3aed', '#2563eb', '#0d9488']
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false
+          }
+        });
+
+        // Render Recent Activities List
+        const list = document.getElementById('recent-activities-list');
+        list.innerHTML = '';
+        data.recentActivity.forEach(act => {
+          const item = document.createElement('li');
+          item.className = 'list-group-item d-flex justify-content-between align-items-center py-2';
+          item.innerHTML = `
+            <div>
+              <div class="fw-semibold text-dark" style="font-size: 0.85rem;">${act.action}</div>
+              <div class="text-muted" style="font-size: 0.75rem;">${act.user_name || 'System'} • ${formatDate(act.timestamp)}</div>
+            </div>
+            <span class="badge ${act.result === 'SUCCESS' ? 'bg-success' : 'bg-danger'}">${act.result}</span>
+          `;
+          list.appendChild(item);
+        });
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    async function loadUsers() {
+      const search = document.getElementById('user-search-input').value;
+      const role = document.getElementById('user-role-filter').value;
+      try {
+        const query = new URLSearchParams({ search, role }).toString();
+        const data = await apiCall('/api/admin/users?' + query);
+        const tbody = document.getElementById('users-table-body');
+        tbody.innerHTML = '';
+
+        if (data.users.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-muted">No users found.</td></tr>';
+          return;
+        }
+
+        data.users.forEach(u => {
+          const tr = document.createElement('tr');
+          const roleBadgeClass = u.role === 'ADMIN' ? 'badge-role-admin' : (u.role === 'OWNER' ? 'badge-role-owner' : 'badge-role-viewer');
+          const statusBadgeClass = u.status === 'ACTIVE' ? 'badge-status-active' : 'badge-status-disabled';
+
+          tr.innerHTML = `
+            <td class="fw-semibold">${u.name}</td>
+            <td class="text-muted">${u.email}</td>
+            <td><span class="badge ${roleBadgeClass}">${u.role}</span></td>
+            <td><span class="badge ${statusBadgeClass}">${u.status}</span></td>
+            <td>${formatDate(u.created_at)}</td>
+            <td>${formatDate(u.last_login_at)}</td>
+            <td class="text-end">
+              <button class="btn btn-sm btn-outline-primary me-1" onclick="openRoleModal('${u.id}', '${u.email}', '${u.role}')">Role</button>
+              <button class="btn btn-sm ${u.status === 'ACTIVE' ? 'btn-outline-danger' : 'btn-outline-success'}" onclick="toggleUserStatus('${u.id}', '${u.status}')">
+                ${u.status === 'ACTIVE' ? 'Disable' : 'Enable'}
+              </button>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    async function loadDocuments() {
+      try {
+        const data = await apiCall('/api/admin/documents');
+        const tbody = document.getElementById('documents-table-body');
+        tbody.innerHTML = '';
+
+        if (data.documents.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-muted">No documents uploaded yet.</td></tr>';
+          return;
+        }
+
+        data.documents.forEach(d => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td class="fw-semibold"><i class="bi bi-file-earmark-text text-primary me-2"></i>${d.name}</td>
+            <td>${d.owner_name} <span class="text-muted small">(${d.owner_email})</span></td>
+            <td><span class="badge bg-secondary">${d.category}</span></td>
+            <td>${formatBytes(d.file_size)}</td>
+            <td><span class="badge bg-info text-dark">${d.active_shares_count} shares</span></td>
+            <td>${formatDate(d.created_at)}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    async function loadAuditLogs() {
+      try {
+        const data = await apiCall('/api/audit-logs');
+        const tbody = document.getElementById('audit-table-body');
+        tbody.innerHTML = '';
+
+        data.logs.forEach(log => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${formatDate(log.timestamp)}</td>
+            <td>${log.user_email || 'System'}</td>
+            <td class="fw-semibold">${log.action}</td>
+            <td><span class="badge ${log.result === 'SUCCESS' ? 'bg-success' : 'bg-danger'}">${log.result}</span></td>
+            <td class="text-muted">${log.ip_address || 'N/A'}</td>
+            <td><code title="${log.event_hash}">${log.event_hash.substring(0, 16)}...</code></td>
+          `;
+          tbody.appendChild(tr);
+        });
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    async function verifyAuditChain() {
+      try {
+        const res = await apiCall('/api/audit-logs/verify');
+        const alertBox = document.getElementById('verify-alert');
+        alertBox.classList.remove('d-none', 'alert-success', 'alert-danger');
+
+        if (res.valid) {
+          alertBox.classList.add('alert-success');
+          alertBox.innerHTML = `<i class="bi bi-check-circle-fill me-2"></i> <strong>Audit Integrity Verified!</strong> All ${res.totalLogs} entries in the hash chain are valid and un-tampered.`;
+        } else {
+          alertBox.classList.add('alert-danger');
+          alertBox.innerHTML = `<i class="bi bi-exclamation-triangle-fill me-2"></i> <strong>Tamper Detected!</strong> Audit log entry #${res.tamperedAt.index} failed hash verification: ${res.tamperedAt.reason}`;
+        }
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    function openRoleModal(id, email, currentRole) {
+      document.getElementById('modal-user-id').value = id;
+      document.getElementById('modal-user-email').textContent = email;
+      document.getElementById('modal-role-select').value = currentRole;
+      const modal = new bootstrap.Modal(document.getElementById('roleModal'));
+      modal.show();
+    }
+
+    async function submitRoleChange() {
+      const id = document.getElementById('modal-user-id').value;
+      const role = document.getElementById('modal-role-select').value;
+      try {
+        const res = await apiCall(`/api/admin/users/${id}/role`, 'PATCH', { role });
+        showToast(res.message, 'success');
+        bootstrap.Modal.getInstance(document.getElementById('roleModal')).hide();
+        loadUsers();
+        loadDashboardData();
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    async function toggleUserStatus(id, currentStatus) {
+      const newStatus = currentStatus === 'ACTIVE' ? 'DISABLED' : 'ACTIVE';
+      if (!confirm(`Are you sure you want to change user status to ${newStatus}?`)) return;
+
+      try {
+        const res = await apiCall(`/api/admin/users/${id}/status`, 'PATCH', { status: newStatus });
+        showToast(res.message, 'success');
+        loadUsers();
+        loadDashboardData();
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+  </script>
+</body>
+</html>

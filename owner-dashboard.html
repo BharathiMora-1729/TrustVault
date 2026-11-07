@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TrustVault - Owner Dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+  <div class="app-wrapper">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <i class="bi bi-shield-lock-fill"></i>
+        <span>TrustVault</span>
+      </div>
+      <ul class="sidebar-menu">
+        <li class="sidebar-menu-item">
+          <a href="#overview" class="sidebar-menu-link active" data-bs-toggle="tab" data-bs-target="#tab-overview">
+            <i class="bi bi-folder2-open"></i> My Documents
+          </a>
+        </li>
+        <li class="sidebar-menu-item">
+          <a href="#permissions" class="sidebar-menu-link" data-bs-toggle="tab" data-bs-target="#tab-permissions">
+            <i class="bi bi-person-check-fill"></i> Sharing & Permissions
+          </a>
+        </li>
+        <li class="sidebar-menu-item">
+          <a href="#activity" class="sidebar-menu-link" data-bs-toggle="tab" data-bs-target="#tab-activity">
+            <i class="bi bi-clock-history"></i> Activity History
+          </a>
+        </li>
+      </ul>
+      <div class="sidebar-user">
+        <div class="sidebar-user-name" id="user-name-display">Document Owner</div>
+        <div class="sidebar-user-role">DOCUMENT OWNER</div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <header class="top-header">
+        <h2 class="header-title">Owner Dashboard</h2>
+        <div class="d-flex align-items-center gap-3">
+          <button class="btn btn-primary btn-sm fw-semibold" data-bs-toggle="modal" data-bs-target="#uploadModal">
+            <i class="bi bi-cloud-arrow-up-fill me-1"></i> Upload Document
+          </button>
+          <button class="btn btn-outline-danger btn-sm" onclick="handleLogout()">
+            <i class="bi bi-box-arrow-right me-1"></i> Logout
+          </button>
+        </div>
+      </header>
+
+      <div class="content-body">
+        <!-- Stat Cards -->
+        <div class="row g-3 mb-4">
+          <div class="col-md-3">
+            <div class="stat-card d-flex align-items-center gap-3">
+              <div class="stat-icon primary"><i class="bi bi-file-earmark-text"></i></div>
+              <div>
+                <div class="stat-label">My Documents</div>
+                <div class="stat-value" id="stat-my-docs">0</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="stat-card d-flex align-items-center gap-3">
+              <div class="stat-icon success"><i class="bi bi-share"></i></div>
+              <div>
+                <div class="stat-label">Shared Documents</div>
+                <div class="stat-value" id="stat-shared-docs">0</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="stat-card d-flex align-items-center gap-3">
+              <div class="stat-icon warning"><i class="bi bi-key"></i></div>
+              <div>
+                <div class="stat-label">Active Permissions</div>
+                <div class="stat-value" id="stat-active-perms">0</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="stat-card d-flex align-items-center gap-3">
+              <div class="stat-icon teal"><i class="bi bi-hdd"></i></div>
+              <div>
+                <div class="stat-label">Storage Used</div>
+                <div class="stat-value" id="stat-storage-used">0 Bytes</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="tab-content">
+          <!-- My Documents Tab -->
+          <div class="tab-pane fade show active" id="tab-overview">
+            <div class="custom-card">
+              <div class="custom-card-header">
+                <h3 class="custom-card-title">My Document Repository</h3>
+                <input type="text" id="doc-search-input" class="form-control form-control-sm" placeholder="Search my documents..." style="width: 250px;">
+              </div>
+              <div class="custom-card-body p-0">
+                <div class="table-responsive">
+                  <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                      <tr>
+                        <th>Document Name</th>
+                        <th>Category</th>
+                        <th>File Size</th>
+                        <th>Uploaded Date</th>
+                        <th>Active Shares</th>
+                        <th class="text-end">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody id="my-docs-table-body">
+                      <tr><td colspan="6" class="text-center py-4 text-muted">Loading documents...</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sharing & Permissions Tab -->
+          <div class="tab-pane fade" id="tab-permissions">
+            <div class="custom-card">
+              <div class="custom-card-header">
+                <h3 class="custom-card-title">Document Sharing & Access Control List</h3>
+              </div>
+              <div class="custom-card-body p-0">
+                <div class="table-responsive">
+                  <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                      <tr>
+                        <th>Document</th>
+                        <th>Shared With</th>
+                        <th>Permission Type</th>
+                        <th>Granted Date</th>
+                        <th>Status</th>
+                        <th class="text-end">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody id="permissions-table-body">
+                      <tr><td colspan="6" class="text-center py-4 text-muted">Loading permissions...</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Activity History Tab -->
+          <div class="tab-pane fade" id="tab-activity">
+            <div class="custom-card">
+              <div class="custom-card-header">
+                <h3 class="custom-card-title">Document Activity History</h3>
+              </div>
+              <div class="custom-card-body p-0">
+                <div class="table-responsive">
+                  <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                      <tr>
+                        <th>Timestamp</th>
+                        <th>Document</th>
+                        <th>Action</th>
+                        <th>Result</th>
+                      </tr>
+                    </thead>
+                    <tbody id="activity-table-body">
+                      <tr><td colspan="4" class="text-center py-4 text-muted">Loading activity log...</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Upload Document Modal -->
+  <div class="modal fade" id="uploadModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form id="upload-form">
+          <div class="modal-header">
+            <h5 class="modal-title"><i class="bi bi-cloud-arrow-up text-primary me-2"></i>Upload Document</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label for="upload-name" class="form-label font-semibold">Document Title</label>
+              <input type="text" class="form-control" id="upload-name" placeholder="Optional custom title">
+            </div>
+            <div class="mb-3">
+              <label for="upload-category" class="form-label font-semibold">Category</label>
+              <select class="form-select" id="upload-category">
+                <option value="General">General</option>
+                <option value="Confidential">Confidential</option>
+                <option value="Financial">Financial</option>
+                <option value="Legal">Legal</option>
+                <option value="Technical">Technical</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="upload-description" class="form-label font-semibold">Description</label>
+              <textarea class="form-control" id="upload-description" rows="2" placeholder="Brief description..."></textarea>
+            </div>
+            <div class="mb-3">
+              <label for="upload-file" class="form-label font-semibold">Select File</label>
+              <input type="file" class="form-control" id="upload-file" required>
+              <div class="form-text">Supported: PDF, DOCX, XLSX, PPTX, TXT, PNG, JPG, ZIP (Max 15MB).</div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-primary" id="upload-submit-btn">Upload</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Manage Permission Modal -->
+  <div class="modal fade" id="shareModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-person-plus text-primary me-2"></i>Share Document Permissions</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="share-doc-id">
+          <p class="text-muted small">Document: <strong id="share-doc-name" class="text-dark"></strong></p>
+
+          <form id="grant-perm-form" class="row g-2 mb-4 p-3 bg-light rounded border">
+            <div class="col-md-6">
+              <input type="email" class="form-control form-control-sm" id="grant-email" required placeholder="User email address...">
+            </div>
+            <div class="col-md-4">
+              <select class="form-select form-select-sm" id="grant-type">
+                <option value="READ">READ (View & Download)</option>
+                <option value="EDIT">EDIT (View, Download & Edit)</option>
+              </select>
+            </div>
+            <div class="col-md-2">
+              <button type="submit" class="btn btn-primary btn-sm w-100">Grant</button>
+            </div>
+          </form>
+
+          <h6>Active Permissions</h6>
+          <div class="table-responsive">
+            <table class="table table-sm table-hover align-middle">
+              <thead>
+                <tr>
+                  <th>User</th>
+                  <th>Permission</th>
+                  <th>Status</th>
+                  <th class="text-end">Action</th>
+                </tr>
+              </thead>
+              <tbody id="share-modal-table-body">
+                <tr><td colspan="4" class="text-center text-muted">No permissions granted yet.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="/js/app.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      await checkAuth('OWNER');
+      loadDashboardData();
+      loadMyDocuments();
+      loadPermissions();
+      loadActivity();
+
+      // File upload handler
+      document.getElementById('upload-form').addEventListener('submit', handleUpload);
+      document.getElementById('grant-perm-form').addEventListener('submit', handleGrantPermission);
+    });
+
+    async function loadDashboardData() {
+      try {
+        const data = await apiCall('/api/owner/dashboard');
+        document.getElementById('stat-my-docs').textContent = data.stats.myTotalDocs;
+        document.getElementById('stat-shared-docs').textContent = data.stats.totalSharedWithOthers;
+        document.getElementById('stat-active-perms').textContent = data.stats.activePermissionsCount;
+        document.getElementById('stat-storage-used').textContent = formatBytes(data.stats.storageUsedBytes);
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    async function loadMyDocuments() {
+      try {
+        const data = await apiCall('/api/owner/documents');
+        const tbody = document.getElementById('my-docs-table-body');
+        tbody.innerHTML = '';
+
+        if (data.documents.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-muted">You have not uploaded any documents yet.</td></tr>';
+          return;
+        }
+
+        data.documents.forEach(doc => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td class="fw-semibold"><i class="bi bi-file-earmark-text text-primary me-2"></i>${doc.name}</td>
+            <td><span class="badge bg-secondary">${doc.category}</span></td>
+            <td>${formatBytes(doc.file_size)}</td>
+            <td>${formatDate(doc.created_at)}</td>
+            <td><span class="badge bg-info text-dark">${doc.shared_count} users</span></td>
+            <td class="text-end">
+              <a href="/api/documents/${doc.id}/download" class="btn btn-sm btn-outline-success me-1"><i class="bi bi-download"></i></a>
+              <button class="btn btn-sm btn-outline-primary me-1" onclick="openShareModal('${doc.id}', '${doc.name}')"><i class="bi bi-person-plus"></i> Share</button>
+              <button class="btn btn-sm btn-outline-danger" onclick="deleteDocument('${doc.id}', '${doc.name}')"><i class="bi bi-trash"></i></button>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    async function loadPermissions() {
+      try {
+        const data = await apiCall('/api/owner/permissions');
+        const tbody = document.getElementById('permissions-table-body');
+        tbody.innerHTML = '';
+
+        if (data.permissions.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-muted">No permissions granted yet.</td></tr>';
+          return;
+        }
+
+        data.permissions.forEach(p => {
+          const tr = document.createElement('tr');
+          const isRevoked = p.status === 'REVOKED';
+          tr.innerHTML = `
+            <td class="fw-semibold">${p.document_name}</td>
+            <td>${p.user_name} <span class="text-muted small">(${p.user_email})</span></td>
+            <td><span class="badge ${p.permission_type === 'EDIT' ? 'badge-perm-edit' : 'badge-perm-read'}">${p.permission_type}</span></td>
+            <td>${formatDate(p.granted_at)}</td>
+            <td><span class="badge ${isRevoked ? 'bg-danger' : 'bg-success'}">${p.status}</span></td>
+            <td class="text-end">
+              ${!isRevoked ? `<button class="btn btn-sm btn-outline-danger" onclick="revokePermission('${p.document_id}', '${p.id}')">Revoke</button>` : '<span class="text-muted small">Revoked</span>'}
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    async function loadActivity() {
+      try {
+        const data = await apiCall('/api/owner/activity');
+        const tbody = document.getElementById('activity-table-body');
+        tbody.innerHTML = '';
+
+        data.activity.forEach(a => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${formatDate(a.timestamp)}</td>
+            <td class="fw-semibold">${a.document_name || 'N/A'}</td>
+            <td>${a.action}</td>
+            <td><span class="badge ${a.result === 'SUCCESS' ? 'bg-success' : 'bg-danger'}">${a.result}</span></td>
+          `;
+          tbody.appendChild(tr);
+        });
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    async function handleUpload(e) {
+      e.preventDefault();
+      const fileInput = document.getElementById('upload-file');
+      if (!fileInput.files[0]) return;
+
+      const formData = new FormData();
+      formData.append('file', fileInput.files[0]);
+      formData.append('name', document.getElementById('upload-name').value);
+      formData.append('category', document.getElementById('upload-category').value);
+      formData.append('description', document.getElementById('upload-description').value);
+
+      const submitBtn = document.getElementById('upload-submit-btn');
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Uploading...';
+
+      try {
+        const res = await apiCall('/api/documents', 'POST', formData);
+        showToast(res.message, 'success');
+        bootstrap.Modal.getInstance(document.getElementById('uploadModal')).hide();
+        document.getElementById('upload-form').reset();
+        loadDashboardData();
+        loadMyDocuments();
+      } catch (err) {
+        showToast(err.message, 'error');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Upload';
+      }
+    }
+
+    async function openShareModal(docId, docName) {
+      document.getElementById('share-doc-id').value = docId;
+      document.getElementById('share-doc-name').textContent = docName;
+      await refreshShareModalList(docId);
+      const modal = new bootstrap.Modal(document.getElementById('shareModal'));
+      modal.show();
+    }
+
+    async function refreshShareModalList(docId) {
+      try {
+        const data = await apiCall(`/api/documents/${docId}/permissions`);
+        const tbody = document.getElementById('share-modal-table-body');
+        tbody.innerHTML = '';
+
+        if (data.permissions.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-2">No users currently have access.</td></tr>';
+          return;
+        }
+
+        data.permissions.forEach(p => {
+          const tr = document.createElement('tr');
+          const isRevoked = p.status === 'REVOKED';
+          tr.innerHTML = `
+            <td>${p.user_email}</td>
+            <td><span class="badge ${p.permission_type === 'EDIT' ? 'badge-perm-edit' : 'badge-perm-read'}">${p.permission_type}</span></td>
+            <td><span class="badge ${isRevoked ? 'bg-danger' : 'bg-success'}">${p.status}</span></td>
+            <td class="text-end">
+              ${!isRevoked ? `<button class="btn btn-sm btn-outline-danger py-0" onclick="revokePermission('${docId}', '${p.id}')">Revoke</button>` : '<span class="text-muted small">Revoked</span>'}
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    async function handleGrantPermission(e) {
+      e.preventDefault();
+      const docId = document.getElementById('share-doc-id').value;
+      const userEmail = document.getElementById('grant-email').value.trim();
+      const permissionType = document.getElementById('grant-type').value;
+
+      try {
+        const res = await apiCall(`/api/documents/${docId}/permissions`, 'POST', { userEmail, permissionType });
+        showToast(res.message, 'success');
+        document.getElementById('grant-email').value = '';
+        refreshShareModalList(docId);
+        loadPermissions();
+        loadDashboardData();
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    async function revokePermission(docId, permId) {
+      if (!confirm('Immediately revoke access for this user?')) return;
+      try {
+        const res = await apiCall(`/api/documents/${docId}/permissions/${permId}`, 'DELETE');
+        showToast(res.message, 'success');
+        refreshShareModalList(docId);
+        loadPermissions();
+        loadDashboardData();
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    async function deleteDocument(docId, name) {
+      if (!confirm(`Are you sure you want to delete "${name}"? This action cannot be undone.`)) return;
+      try {
+        const res = await apiCall(`/api/documents/${docId}`, 'DELETE');
+        showToast(res.message, 'success');
+        loadDashboardData();
+        loadMyDocuments();
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+  </script>
+</body>
+</html>

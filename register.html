@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TrustVault - Secure Document Sharing Platform | Register</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+  <div class="auth-wrapper">
+    <div class="auth-card">
+      <div class="auth-header">
+        <div class="auth-logo"><i class="bi bi-shield-lock-fill"></i></div>
+        <h1 class="auth-title">Create Account</h1>
+        <p class="auth-subtitle">Register to upload and securely share documents</p>
+      </div>
+
+      <form id="register-form">
+        <div class="mb-3">
+          <label for="name" class="form-label font-semibold">Full Name</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-person"></i></span>
+            <input type="text" class="form-control" id="name" required placeholder="John Doe">
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label for="email" class="form-label font-semibold">Email Address</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+            <input type="email" class="form-control" id="email" required placeholder="john@company.com">
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label for="password" class="form-label font-semibold">Password</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-key"></i></span>
+            <input type="password" class="form-control" id="password" required placeholder="At least 6 characters">
+          </div>
+        </div>
+
+        <div class="mb-4">
+          <label for="confirmPassword" class="form-label font-semibold">Confirm Password</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-check2-square"></i></span>
+            <input type="password" class="form-control" id="confirmPassword" required placeholder="Re-enter password">
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100 py-2 font-semibold" id="register-btn">
+          <span id="btn-text">Create Account</span>
+          <span id="btn-spinner" class="spinner-border spinner-border-sm d-none" role="status"></span>
+        </button>
+      </form>
+
+      <div class="mt-4 text-center">
+        <p class="text-muted small mb-0">Already have an account? <a href="/index.html" class="text-primary text-decoration-none font-semibold">Log in here</a></p>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="/js/app.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const form = document.getElementById('register-form');
+      const registerBtn = document.getElementById('register-btn');
+      const btnText = document.getElementById('btn-text');
+      const btnSpinner = document.getElementById('btn-spinner');
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const name = document.getElementById('name').value.trim();
+        const email = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+
+        if (password !== confirmPassword) {
+          showToast('Password and Confirm Password do not match.', 'error');
+          return;
+        }
+
+        btnText.textContent = 'Creating Account...';
+        btnSpinner.classList.remove('d-none');
+        registerBtn.disabled = true;
+
+        try {
+          const res = await apiCall('/api/auth/register', 'POST', {
+            name, email, password, confirmPassword
+          });
+          showToast(res.message, 'success');
+          setTimeout(() => {
+            window.location.href = '/index.html';
+          }, 1000);
+        } catch (err) {
+          showToast(err.message, 'error');
+          btnText.textContent = 'Create Account';
+          btnSpinner.classList.add('d-none');
+          registerBtn.disabled = false;
+        }
+      });
+    });
+  </script>
+</body>
+</html>
