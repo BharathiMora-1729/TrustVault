@@ -23,7 +23,7 @@
           <label for="email" class="form-label font-semibold">Email Address</label>
           <div class="input-group">
             <span class="input-group-text"><i class="bi bi-envelope"></i></span>
-            <input type="email" class="form-control" id="email" required placeholder="name@company.com">
+            <input type="email" class="form-control" id="email" required placeholder="name@company.com" autocomplete="email">
           </div>
         </div>
 
@@ -31,7 +31,7 @@
           <label for="password" class="form-label font-semibold">Password</label>
           <div class="input-group">
             <span class="input-group-text"><i class="bi bi-key"></i></span>
-            <input type="password" class="form-control" id="password" required placeholder="Enter password">
+            <input type="password" class="form-control" id="password" required placeholder="Enter password" autocomplete="current-password">
             <span class="input-group-text password-toggle" id="toggle-password">
               <i class="bi bi-eye" id="toggle-icon"></i>
             </span>
@@ -47,7 +47,7 @@
 
         <button type="submit" class="btn btn-primary w-100 py-2 font-semibold" id="login-btn">
           <span id="btn-text">Log In</span>
-          <span id="btn-spinner" class="spinner-border spinner-border-sm d-none" role="status"></span>
+          <span id="btn-spinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
         </button>
       </form>
 
@@ -67,9 +67,9 @@
   <script src="/js/app.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
-      // If already logged in, redirect to correct role dashboard
+      // Fast non-blocking background auth check
       try {
-        const data = await apiCall('/api/auth/me');
+        const data = await apiCall('/api/auth/me', 'GET', null, 3000);
         if (data && data.user) {
           redirectToRoleDashboard(data.user.role);
           return;
@@ -87,7 +87,7 @@
         toggleIcon.className = type === 'password' ? 'bi bi-eye' : 'bi bi-eye-slash';
       });
 
-      // Handle Form Submit
+      // Handle Form Submit with try/catch/finally and 10s AbortController timeout protection
       const loginForm = document.getElementById('login-form');
       const loginBtn = document.getElementById('login-btn');
       const btnText = document.getElementById('btn-text');
@@ -95,21 +95,32 @@
 
       loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
+
         const email = document.getElementById('email').value.trim();
         const password = document.getElementById('password').value;
 
+        if (!email || !password) {
+          showToast('Please fill in both email and password fields.', 'error');
+          return;
+        }
+
+        // Set Loading State
         btnText.textContent = 'Authenticating...';
         btnSpinner.classList.remove('d-none');
         loginBtn.disabled = true;
 
         try {
-          const res = await apiCall('/api/auth/login', 'POST', { email, password });
+          // Send login request with 10-second timeout abort threshold
+          const res = await apiCall('/api/auth/login', 'POST', { email, password }, 10000);
           showToast(res.message, 'success');
-          setTimeout(() => {
-            redirectToRoleDashboard(res.user.role);
-          }, 500);
+          
+          // Redirect to appropriate dashboard based on database role
+          redirectToRoleDashboard(res.user.role);
         } catch (err) {
+          // Display user feedback toast
           showToast(err.message, 'error');
+        } finally {
+          // ALWAYS reset button state in finally block to prevent button sticking
           btnText.textContent = 'Log In';
           btnSpinner.classList.add('d-none');
           loginBtn.disabled = false;
