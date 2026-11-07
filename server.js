@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const path = require('path');
+const fs = require('fs');
 const session = require('express-session');
 const helmet = require('helmet');
 const cors = require('cors');
@@ -8,42 +9,62 @@ const rateLimit = require('express-rate-limit');
 const bcrypt = require('bcryptjs');
 const { v4: uuidv4 } = require('uuid');
 
-const { getDatabase } = require('./config/database');
-const { logEvent } = require('./services/auditService');
-const errorHandler = require('./middleware/errorHandler');
+/**
+ * Universal safe module resolver.
+ * Handles both structured folder uploads (e.g. ./config/database)
+ * AND flat root uploads (e.g. ./database) on GitHub/Render.
+ */
+function safeRequire(primaryPath, fallbackPath) {
+  try {
+    return require(primaryPath);
+  } catch (err) {
+    if (err.code === 'MODULE_NOT_FOUND' && fallbackPath) {
+      try {
+        return require(fallbackPath);
+      } catch (fallbackErr) {
+        throw err;
+      }
+    }
+    throw err;
+  }
+}
 
-// Import routes
-const authRoutes = require('./routes/auth');
-const adminRoutes = require('./routes/admin');
-const ownerRoutes = require('./routes/owner');
-const viewerRoutes = require('./routes/viewer');
-const documentRoutes = require('./routes/documents');
-const permissionRoutes = require('./routes/permissions');
-const auditRoutes = require('./routes/audit');
+// Load Modules with Fallbacks
+const { getDatabase } = safeRequire('./config/database', './database');
+const { logEvent } = safeRequire('./services/auditService', './auditService');
+const errorHandler = safeRequire('./middleware/errorHandler', './errorHandler');
+
+const authRoutes = safeRequire('./routes/auth', './auth');
+const adminRoutes = safeRequire('./routes/admin', './admin');
+const ownerRoutes = safeRequire('./routes/owner', './owner');
+const viewerRoutes = safeRequire('./routes/viewer', './viewer');
+const documentRoutes = safeRequire('./routes/documents', './documents');
+const permissionRoutes = safeRequire('./routes/permissions', './permissions');
+const auditRoutes = safeRequire('./routes/audit', './audit');
 
 const app = express();
 
 // Security Headers
 app.use(helmet({
-  contentSecurityPolicy: false // Allows Bootstrap CDN & Chart.js scripts
+  contentSecurityPolicy: false
 }));
 
 // CORS
 app.use(cors());
 
-// Rate Limiter for general API routes
+// Rate Limiting
 const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
+  windowMs: 15 * 60 * 1000,
   max: 300,
   standardHeaders: true,
   legacyHeaders: false,
-  message: { error: 'Too many requests from this IP, please try again after 15 minutes.' }
+  message: { error: 'Too many requests, please try again later.' }
 });
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 30,
-  message: { error: 'Too many authentication attempts, please try again later.' }
+  message: { error: 'Too many login attempts, please try again later.' }
 });
 
 app.use('/api/', apiLimiter);
@@ -65,12 +86,13 @@ app.use(session({
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
-    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    maxAge: 24 * 60 * 60 * 1000
   }
 }));
 
-// Serve static frontend files
-app.use(express.static(path.join(__dirname, 'public')));
+// Serve static frontend files (Checks both public/ and root directory)
+const publicDir = fs.existsSync(path.join(__dirname, 'public')) ? path.join(__dirname, 'public') : __dirname;
+app.use(express.static(publicDir));
 
 // Mount API routes
 app.use('/api/auth', authRoutes);
@@ -81,12 +103,24 @@ app.use('/api/documents', documentRoutes);
 app.use('/api/documents', permissionRoutes);
 app.use('/api/audit-logs', auditRoutes);
 
-// Single Page Application Fallback for static HTML pages
-app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'public/index.html')));
-app.get('/register', (req, res) => res.sendFile(path.join(__dirname, 'public/register.html')));
-app.get('/admin-dashboard', (req, res) => res.sendFile(path.join(__dirname, 'public/admin-dashboard.html')));
-app.get('/owner-dashboard', (req, res) => res.sendFile(path.join(__dirname, 'public/owner-dashboard.html')));
-app.get('/viewer-dashboard', (req, res) => res.sendFile(path.join(__dirname, 'public/viewer-dashboard.html')));
+// Page Fallbacks
+function serveFile(res, primaryFile, fallbackFile) {
+  const primaryPath = path.join(__dirname, 'public', primaryFile);
+  if (fs.existsSync(primaryPath)) {
+    return res.sendFile(primaryPath);
+  }
+  const rootPath = path.join(__dirname, fallbackFile);
+  if (fs.existsSync(rootPath)) {
+    return res.sendFile(rootPath);
+  }
+  res.sendFile(path.join(__dirname, primaryFile));
+}
+
+app.get('/login', (req, res) => serveFile(res, 'index.html', 'index.html'));
+app.get('/register', (req, res) => serveFile(res, 'register.html', 'register.html'));
+app.get('/admin-dashboard', (req, res) => serveFile(res, 'admin-dashboard.html', 'admin-dashboard.html'));
+app.get('/owner-dashboard', (req, res) => serveFile(res, 'owner-dashboard.html', 'owner-dashboard.html'));
+app.get('/viewer-dashboard', (req, res) => serveFile(res, 'viewer-dashboard.html', 'viewer-dashboard.html'));
 
 // Global Error Handler
 app.use(errorHandler);
@@ -125,7 +159,6 @@ async function seedDefaultAdmin() {
   }
 }
 
-// Initialize database & start server if run directly
 const PORT = process.env.PORT || 3000;
 
 if (require.main === module) {
