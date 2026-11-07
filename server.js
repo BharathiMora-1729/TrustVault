@@ -14,7 +14,7 @@ const crypto = require('crypto');
 
 /**
  * TrustVault - Complete Self-Contained Enterprise Server
- * Handles directory permissions gracefully to prevent EACCES errors on cloud platforms.
+ * Optimized for instant login responses and zero-delay authentication.
  */
 
 // ============================================================================
@@ -25,7 +25,6 @@ let dbInstance = null;
 function getDatabase(customPath = null) {
   let dataDir = process.env.DATA_DIR || path.join(__dirname, 'data');
 
-  // Defensive Directory Creation (Graceful fallback if /var/data permission is denied)
   try {
     if (!fs.existsSync(dataDir)) {
       fs.mkdirSync(dataDir, { recursive: true });
@@ -494,13 +493,15 @@ app.post('/api/auth/login', async (req, res, next) => {
       return res.status(403).json({ error: 'Your account has been disabled. Please contact an administrator.' });
     }
 
-    req.session.regenerate((err) => {
-      if (err) return next(err);
-      req.session.userId = user.id;
-      db.prepare('UPDATE users SET last_login_at = ? WHERE id = ?').run(new Date().toISOString(), user.id);
+    // Direct Instant Session Assignment (Zero-delay authentication)
+    req.session.userId = user.id;
+    db.prepare('UPDATE users SET last_login_at = ? WHERE id = ?').run(new Date().toISOString(), user.id);
 
-      logEvent(db, { userId: user.id, action: 'USER_LOGIN_SUCCESS', result: 'SUCCESS', ipAddress: req.ip, metadata: { email: normalizedEmail, role: user.role } });
-      res.json({ message: 'Login successful.', user: { id: user.id, name: user.name, email: user.email, role: user.role, status: user.status } });
+    logEvent(db, { userId: user.id, action: 'USER_LOGIN_SUCCESS', result: 'SUCCESS', ipAddress: req.ip, metadata: { email: normalizedEmail, role: user.role } });
+
+    res.json({
+      message: 'Login successful.',
+      user: { id: user.id, name: user.name, email: user.email, role: user.role, status: user.status }
     });
   } catch (err) { next(err); }
 });
